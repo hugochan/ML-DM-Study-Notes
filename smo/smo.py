@@ -53,7 +53,10 @@ class SMO(object):
             if a[i] > 0 and a[i] < C:
                 b += (y[i] - self.predict(a, x, y, x[i], 0, kernel_type))
                 count += 1
-        b = b/count
+        if count == 0:
+            pass
+        else:
+            b = b/count
         w = None
         if kernel_type == 'linear':
             w = (a*y).dot(x)
@@ -92,17 +95,16 @@ class SMO(object):
             raise ValueError('Invalid argments: %s'%kernel_type)
 
 if __name__ == '__main__':
+    import sys
     smo = SMO()
-    try: # use the comandline parameters
+    try:
         in_file = sys.argv[1]
-        C = sys.argv[2]
+        C = float(sys.argv[2])
         kernel_type = sys.argv[3]
-        eps = sys.argv[4]
-    except: # use the default parameters
-        in_file = 'iris-slwc.txt'
-        C = 1
-        kernel_type = 'linear'
-        eps = 0.001
+        eps = float(sys.argv[4])
+    except:
+        print "ERROR: missing or invalid arguments"
+        exit()
     data = smo.load_data(in_file)
     a, b, w = smo.train(data, C, kernel_type, eps)
     accuracy = smo.calc_accuracy(data, a, b, kernel_type)
