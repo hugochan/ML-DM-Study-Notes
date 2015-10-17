@@ -73,14 +73,14 @@ class MultiLDA(object):
 
 if __name__ == '__main__':
     import sys
-    blda = MultiLDA()
+    mlda = MultiLDA()
     try:
         in_file = sys.argv[1]
     except:
         print "ERROR: missing or invalid arguments"
         exit()
-    data = blda.load_data(in_file)
-    w = blda.train(data)
+    data = mlda.load_data(in_file)
+    w = mlda.train(data)
     print "direction: %s"%w
-    accuracy = blda.calc_accuracy(data)
+    accuracy = mlda.calc_accuracy(data)
     print "accuracy on training data: %s"%accuracy
