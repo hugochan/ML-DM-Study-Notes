@@ -30,7 +30,15 @@ class BiLDA(object):
         S[0] = Z_list[0].transpose().dot(Z_list[0])
         S[1] = Z_list[1].transpose().dot(Z_list[1])
         Total_S = S[0] + S[1]
-        w = np.linalg.inv(Total_S).dot(u_list[0] - u_list[1])
+
+        # w = np.linalg.inv(Total_S).dot(u_list[0] - u_list[1])
+
+        # or
+        tt = (u_list[0]-u_list[1]).reshape((data.shape[1]-1,1))
+        B = tt.dot(tt.transpose())
+        aa, bb = np.linalg.eigh(np.linalg.inv(Total_S).dot(B))
+        w = bb[np.argmax(aa)]
+
         self.m0 = w.transpose().dot(u_list[0])
         self.m1 = w.transpose().dot(u_list[1])
         return w
