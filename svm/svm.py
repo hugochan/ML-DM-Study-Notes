@@ -3,9 +3,9 @@
 import numpy as np
 import random
 
-class SMO(object):
+class SVM(object):
     def __init__(self):
-        super(SMO, self).__init__()
+        super(SVM, self).__init__()
 
     def load_data(self, file_in):
         data = np.genfromtxt(file_in, delimiter=',')
@@ -96,7 +96,7 @@ class SMO(object):
 
 if __name__ == '__main__':
     import sys
-    smo = SMO()
+    svm = SVM()
     try:
         in_file = sys.argv[1]
         C = float(sys.argv[2])
@@ -105,9 +105,9 @@ if __name__ == '__main__':
     except:
         print "ERROR: missing or invalid arguments"
         exit()
-    data = smo.load_data(in_file)
-    a, b, w = smo.train(data, C, kernel_type, eps)
-    accuracy = smo.calc_accuracy(data, a, b, kernel_type)
+    data = svm.load_data(in_file)
+    a, b, w = svm.train(data, C, kernel_type, eps)
+    accuracy = svm.calc_accuracy(data, a, b, kernel_type)
     # print support-vectors, i.e., the pairs i, ai>0
     print 'The support vectors are:'
     count = 0
@@ -119,4 +119,4 @@ if __name__ == '__main__':
     print 'bias: %s'%b
     if kernel_type == 'linear':
         print 'w: %s'%w
-    print 'accuracy: %s'%accuracy
+    print 'accuvmcy: %s'%accuracy
