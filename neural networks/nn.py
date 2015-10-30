@@ -8,7 +8,6 @@ class NN(object):
         super(NN, self).__init__()
 
     def load_data(self, file_in, sep):
-        # data = np.genfromtxt(file_in, delimiter=',')
         data = []
         try:
             with open(file_in, 'r') as f:
@@ -34,17 +33,15 @@ class NN(object):
         self.Who = np.random.rand(self.Nh + 1, self.No) - 0.5 # hidden - output layer
 
     def train(self, data, Nh, eps, eta, epochs):
-        # import pdb;pdb.set_trace()
         self.init_settings(data, Nh)
         for e in range(epochs):
             count = 0
             patterns = range(self.N)
-            # np.random.shuffle(patterns)
+            np.random.shuffle(patterns)
             for i in patterns:
                 x = self.X[i].reshape(self.Ni, 1)
                 y = self.class_coding[self.Y[i]].reshape(self.No, 1)
                 converged = False
-                # import pdb;pdb.set_trace()
                 while not converged:
                     y_hat, h = self.feedforward(x)
                     mse = 0.5*np.linalg.norm(y_hat - y)**2
@@ -86,16 +83,12 @@ class NN(object):
         X = data[:, :-1].astype(np.float64)
         Y = data[:, -1]
         count = 0.0
-        # import pdb;pdb.set_trace()
         for i in range(0, n):
             x = X[i].reshape(self.Ni, 1)
             y = self.class_coding[Y[i]].reshape(self.No, 1)
             y_hat = self.feedforward(x)[0]
-            if np.linalg.norm(np.round(y_hat) - y) == 0:
+            if np.argmax(y_hat) == np.argmax(y):
                 count += 1
-            # mse = 0.5*np.linalg.norm(y_hat - y)**2
-            # if mse <= eps:
-                # count += 1
         accuracy = count/n
         return accuracy
 
@@ -113,7 +106,7 @@ if __name__ == '__main__':
         # Nh = 4
         # eps = 0.01
         # eta = 0.5
-        # epochs = 10000
+        # epochs = 100
         print "ERROR: missing or invalid arguments"
         exit()
     nn = NN()
