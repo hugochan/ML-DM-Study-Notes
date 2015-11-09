@@ -69,13 +69,13 @@ class NN(object):
         # update Who: weight connecting hidden and output layers
         Dt = (y - y_hat)*y_hat*(1 - y_hat) # no * 1 matrix
         delta_Who = (eta*Dt.dot(h.transpose())).transpose() # (nh + 1) * no matrix
-        self.Who += delta_Who
 
         # update Wih: wight connecting input and hidden layers
         x = np.vstack((x, np.ones((1, 1))))
         Dt = h[:-1, :]*(1 - h[:-1, :])*(self.Who[:-1, :].dot(Dt)) # nh * 1 matrix
         delta_Wih = (eta*Dt.dot(x.transpose())).transpose() # (ni + 1) * nh matrix
         self.Wih += delta_Wih
+        self.Who += delta_Who
 
     def calc_accuracy(self, data):
         # compute accuracy on training set
