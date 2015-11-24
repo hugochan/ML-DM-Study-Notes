@@ -11,7 +11,6 @@ class EMClus(object):
         super(EMClus, self).__init__()
         old_settings = np.seterr(over='ignore')
 
-
     def load_data(self, file_in, sep=','):
         data = []
         try:
@@ -26,40 +25,58 @@ class EMClus(object):
         data = np.array(data)
         return data
 
-    def gaussian(self, x, mean, cov_inv, cov_det):
+    def gaussian(self, x, mean, cov_inv, cov_det, covariance):
         d = cov_inv.shape[0]
         centered_x = (x - mean).reshape((d, 1))
         exponent = -centered_x.transpose().dot(cov_inv).dot(centered_x) / 2
-        y = np.exp(exponent) / np.power(2 * np.pi, d / 2.0) / np.power(cov_det, 0.5)
+        try:
+            y = np.exp(exponent) / np.power(2 * np.pi, d / 2.0) / np.power(cov_det, 0.5)
+        except Exception, e:
+            print e
+            exit()
         return y
 
     def calc_post_prob(self, x, means, covariances, prior_prob, _lambda=0.0001):
         n = x.shape[0]
-        k = means.shape[0]
+        k, d = means.shape
         w = np.zeros((k, n))
         for i in range(k):
             cov_det = np.linalg.det(covariances[i])
             if cov_det == 0:
-                covariances[i] += np.diag([_lambda]*(covariances[i].shape[0]))
+                # self.reg += 1
+                covariances[i] += np.identity(d) * _lambda
                 cov_det = np.linalg.det(covariances[i])
             cov_inv = np.linalg.inv(covariances[i])
             for j in range(n):
-                w[i, j] = prior_prob[i, 0] * self.gaussian(x[j, :], means[i, :], cov_inv, cov_det)
+                w[i, j] = prior_prob[i, 0] * self.gaussian(x[j, :], means[i, :], cov_inv, cov_det, covariances[i])
         w = w/w.sum(0)
         return w
 
     def EM(self, data, k, eps):
+        # self.reg = 0
         x = data[:, :-1].astype(np.float64)
         n, d = x.shape
         # initilization
         means = np.zeros((k, d))
         covariances = [np.zeros((d, d)) for i in range(k)]
+        self.cov = covariances
         prior_prob = np.zeros((k, 1))
         cluster = np.zeros((n, k))
-        rand_pool = range(k)
+
+        # rand_pool = range(k)
+        # for i in range(n):
+        #     cluster[i, random.choice(rand_pool)] = 1 # random assignment of points to clusters
+        # # compute initial means, covariances and prior probabilities for each cluster
+
+        rand_pool = range(n)
+        for i in range(k):
+            choice = np.random.choice(rand_pool)
+            means[i, :] = x[choice]
+
         for i in range(n):
-            cluster[i, random.choice(rand_pool)] = 1 # random assignment of points to clusters
-        # compute initial means, covariances and prior probabilities for each cluster
+            clus_id = np.argmin(np.linalg.norm(x[i] - means, axis=1))
+            cluster[i, clus_id] = 1
+
         for i in range(k):
             mask = cluster[:, i].reshape((n, 1))
             valid_count = np.sum(mask)
@@ -69,6 +86,8 @@ class EMClus(object):
                 centered_x = mask * (x - means[i, :])
                 covariances[i] = centered_x.transpose().dot(centered_x) / valid_count
                 prior_prob[i, 0] = float(valid_count) / n
+            else:
+                exit()
 
         # iteration
         itn = 0
@@ -83,13 +102,14 @@ class EMClus(object):
                 centered_x = x - means[i, :]
                 covariances[i] = (w[i, :] * (centered_x.transpose())).dot(centered_x) / total_weigths
                 prior_prob[i, 0] = total_weigths / n
-
             error = 0
             for i in range(k):
                 diff = means[i, :] - pre_means[i, :]
-                error += diff.dot(diff)
+                error += np.linalg.norm(diff)
             if error <= eps:
                 break
+        # print "reg: %s"%self.reg
+        # print "error: %s"%error
         return means, covariances, prior_prob, itn
 
     def cluster(self, data, means, covariances, prior_prob):
@@ -119,6 +139,8 @@ class EMClus(object):
         k = len(clus_pts)
         purity = 0.0
         for i in range(k):
+            if not clus_pts.has_key(i):
+                continue
             _max = -1
             for key, val in truth_clus.items():
                 count_intersection = len(set(clus_pts[i]) & set(val))
@@ -145,15 +167,15 @@ if __name__ == '__main__':
     means, covariances, prior_prob, itn = emc.EM(data, K, eps)
     print "finial means for each cluster:"
     print means
-    print "finial covariance matrix for each cluster:"
+    print "\r\nfinial covariance matrix for each cluster:"
     print covariances
-    print "number of iterations:"
+    print "\r\nnumber of iterations:"
     print itn
     cluster, clus_size, clus_pts = emc.cluster(data, means, covariances, prior_prob)
-    print "finial cluster assignment of all the points:"
+    print "\r\nfinial cluster assignment of all the points:"
     print clus_pts
-    print "finial size of each cluster:"
+    print "\r\nfinial size of each cluster:"
     print clus_size
     purity = emc.calc_purity(data, clus_pts)
-    print "purity:"
+    print "\r\npurity:"
     print purity
