@@ -8,31 +8,37 @@ from copy import deepcopy
 # graph format: [(from_id, to_id, from_label, to_label, e_label), ...]
 # dataset format: [graph, ...]
 
-def gSpan(dfs_codes, dataset, minsup):
+def gSpan(dfs_codes, dataset, minsup, patterns):
+    if patterns == []:
+        patterns.append(dfs_codes)
     ext_sups = extend_right_most_path(dfs_codes, dataset) # extensions and supports
     for t, sup in ext_sups:
         new_dfs_codes = deepcopy(dfs_codes)
         new_dfs_codes.append(t) # extend the code with extended edge tuple t
+
         # recursively call gSpan() if code is frequent and canonical
         if sup >= minsup and is_canonical(new_dfs_codes):
-            gSpan(new_dfs_codes, dataset, minsup)
+            patterns.append(new_dfs_codes)
+            gSpan(new_dfs_codes, dataset, minsup, patterns)
+    return patterns
 
 def extend_right_most_path(dfs_codes, dataset):
-    right_most_path = build_right_most_path(dfs_codes) # build the right most path through the dfs code
-    right_most_nodes = [] # nodes on the rightmost path
-    for x in right_most_path:
-        right_most_nodes.extend(x[:2])
-    right_most_nodes = list(set(right_most_nodes))
-    right_most_child = right_most_path[0][1] # rightmost child (dfs id)
+    if dfs_codes:
+        right_most_path = build_right_most_path(dfs_codes) # build the right most path through the dfs code
+        right_most_nodes = [] # nodes on the rightmost path
+        for x in right_most_path:
+            right_most_nodes.extend(x[:2])
+        right_most_nodes = list(set(right_most_nodes))
+        right_most_child = right_most_path[0][1] # rightmost child (dfs id)
     exts =[] # set of extensions
 
     for i in range(len(dataset)):
         graph = dataset[i]
         if not dfs_codes:
-            f = list(set([(0, 1) + x[2:] for x in graph])) # forward edges
+            f = list(set([(0, 1) + x[2:] for x in graph] + [(0, 1) + (x[3], x[2], x[4]) for x in graph]))
             exts.extend(zip(f, [i for x in range(len(f))]))
         else:
-            isomorphisms = get_sub_graph_isomorphisms(dfs_codes, graph)
+            isomorphisms = get_subgraph_isomorphisms(dfs_codes, graph)
             for iso in isomorphisms:
                 iso_reverse = dict(zip(iso.values(), iso.keys()))
                 neighbors = get_neighbors(iso[right_most_child], graph)
@@ -61,16 +67,34 @@ def extend_right_most_path(dfs_codes, dataset):
     ext_sups = sorted(ext_sups, cmp=dfs_code_cmp, key=lambda e:e[0])
     return ext_sups
 
-# ???????
 def get_subgraph_isomorphisms(dfs_codes, graph):
+    isomorphisms = []
     nodes = []
     for x in graph:
         nodes.extend([(x[0], x[2]), (x[1], x[3])])
     nodes = list(set(nodes))
     for node_id, node_label in nodes:
         if node_label == get_node_dfs_label(0, dfs_codes):
-            pass
+            isomorphisms.append({0: node_id}) # dfs id -> node id
 
+    for code in dfs_codes:
+        tmp_isomorphisms = []
+        for iso in isomorphisms:
+            iso_reverse = dict(zip(iso.values(), iso.keys()))
+            if code[1] > code[0]: # forward edge
+                neighbors = get_neighbors(iso[code[0]], graph)
+                for x in neighbors:
+                    if not iso_reverse.has_key(x):
+                        labels = get_labels_by_edge((iso[code[0]], x), graph)
+                        if labels[1] == code[3] and labels[2] == code[4]:
+                            tmp_iso = deepcopy(iso)
+                            tmp_iso[code[1]] = x
+                            tmp_isomorphisms.append(tmp_iso)
+            else: # backward edge
+                if iso[code[1]] in get_neighbors(iso[code[0]], graph):
+                    tmp_isomorphisms.append(iso)
+        isomorphisms = tmp_isomorphisms
+    return isomorphisms
 
 def is_canonical(dfs_codes):
     # graph corresponding to the dfs code
@@ -84,8 +108,8 @@ def is_canonical(dfs_codes):
         canonical_dfs_code.append(ext)
     return True
 
-def get_graph_by_dfs_codes(dfs_codes): #????
-    pass
+def get_graph_by_dfs_codes(dfs_codes):
+    return dfs_codes
 
 def dfs_code_cmp(a, b):
     ret = dfs_edge_cmp(a[:2], b[:2]) # compare edges
@@ -198,6 +222,13 @@ def load_data(file_in, sep=' '):
     return data
 
 if __name__ == '__main__':
-    dataset = load_data('exampleG.txt')
-
+    dataset = load_data('Compound_422.txt')
+    patterns = gSpan([], dataset, 100, patterns=[])
+    for i in range(len(patterns)):
+        print "pattern %s"% (i + 1)
+        if patterns[i] == []:
+            print "()"
+        for each in patterns[i]:
+            print each
+        print
 
