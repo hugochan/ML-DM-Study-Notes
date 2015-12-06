@@ -2,7 +2,6 @@
 
 from copy import deepcopy
 
-
 # dfs_codes format: [(from_iid, to_iid, from_label, to_label, e_label), ...]
 # isomorphism format: {dfs_id: id, }, ps: dfs_id is iid
 # graph format: [(from_id, to_id, from_label, to_label, e_label), ...]
@@ -222,8 +221,15 @@ def load_data(file_in, sep=' '):
     return data
 
 if __name__ == '__main__':
-    dataset = load_data('Compound_422.txt')
-    patterns = gSpan([], dataset, 100, patterns=[])
+    import sys
+    try:
+        in_file = sys.argv[1]
+        minsup = int(sys.argv[2])
+    except:
+        print "ERROR: missing or invalid arguments"
+        exit()
+    dataset = load_data(in_file)
+    patterns = gSpan([], dataset, minsup, patterns=[])
     for i in range(len(patterns)):
         print "pattern %s"% (i + 1)
         if patterns[i] == []:
