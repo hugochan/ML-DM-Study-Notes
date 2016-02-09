@@ -9,20 +9,21 @@ This is my personal study notes for Machine Learning and Data Mining algorithms.
     <li>principal component analysis</li>
     <li>ChiMerge</li>
     <li>eigen-vectors/values</li>
-
-
+</ul>
 
 <h3>Classification:</h3><ul>
     <li>SVM</li>
     <li>naive bayes classifier</li>
     <li>neural networks</li>
+</ul>
 
 <h3>Clustering:</h3><ul>
     <li>knn</li>
     <li>k-means</li>
     <li>EM clustering</li>
+</ul>
 
 <h3>Graph Mining:</h3><ul>
     <li>gSpan</li>
-
+</ul>
 
